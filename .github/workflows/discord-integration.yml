@@ -15,11 +15,12 @@ jobs:
         with:
           python-version: "3.9"
 
+      - name: Install Python dependencies
+        run: pip install requests
+
       - name: Assign Discord role when PR is merged
         if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
-        run: |
-          pip install requests
-          python assign_role.py
+        run: python discord_bot.py
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
@@ -30,9 +31,9 @@ jobs:
         if: ${{ always() }}
         run: |
           curl -H "Content-Type: application/json" \
-            -X POST \
-            -d '{
-              "username": "GitHub Bot",
-              "content": "**PR Event**: '${{ github.event.action }}'\n**User**: '${{ github.actor }}'\n**PR**: '${{ github.event.pull_request.title }}'\n**Link**: '${{ github.event.pull_request.html_url }}''
-            }' \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
+          -X POST \
+          -d '{
+            "username": "GitHub Bot",
+            "content": "**PR Event**: \"${{ github.event.action }}\"\n**User**: \"${{ github.actor }}\"\n**PR**: \"${{ github.event.pull_request.title }}\"\n**Link**: \"${{ github.event.pull_request.html_url }}\""
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
