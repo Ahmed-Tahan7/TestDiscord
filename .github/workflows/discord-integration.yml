@@ -1,0 +1,38 @@
+name: Discord Integration
+on:
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  discord_integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Assign Discord role when PR is merged
+        if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
+        run: |
+          pip install requests
+          python assign_role.py
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          CONTRIBUTOR_ROLE_ID: ${{ secrets.CONTRIBUTOR_ROLE_ID }}
+
+      - name: Notify Discord channel
+        if: ${{ always() }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d '{
+              "username": "GitHub Bot",
+              "content": "**PR Event**: '${{ github.event.action }}'\n**User**: '${{ github.actor }}'\n**PR**: '${{ github.event.pull_request.title }}'\n**Link**: '${{ github.event.pull_request.html_url }}''
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
